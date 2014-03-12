@@ -1,0 +1,9 @@
+../src/main.c
+../src/migemo.c
+../src/charset.c
+../src/filename.c
+../src/mnode.c
+../src/romaji.c
+../src/rxgen.c
+../src/wordbuf.c
+../src/wordlist.c
