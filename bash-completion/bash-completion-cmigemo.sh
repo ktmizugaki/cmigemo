@@ -44,11 +44,11 @@ _filedir() {
 
     if echo "$cur" | grep -q "/" 2>/dev/null; then
         require_dir=1
-        dir="${cur%/*}/"
-        name="${cur##*/}"
+        eval dir="${cur%/*}/"
+        eval name="${cur##*/}"
     else
         dir="./"
-        name="$cur"
+        eval name="$cur"
     fi
     if [ ! -d "$dir" -o ! -x "$dir" ]; then
         unset COMPREPLY;
@@ -56,9 +56,9 @@ _filedir() {
     fi
     
     if [ "${1:-}" = -d ]; then
-        files=$(cd $dir && find . -maxdepth 1 -type d | sed -n -e "s#^\./##p")
+        files=$(cd "$dir" && find . -maxdepth 1 -type d | sed -n -e "s#^\./##p")
     else
-        files=$(cd $dir && find . -maxdepth 1 | sed -n -e "s#^\./##p")
+        files=$(cd "$dir" && find . -maxdepth 1 | sed -n -e "s#^\./##p")
     fi
     if [ -n "$name" ]; then
         pattern=$(_migemo_complete_query "$name" 2>/dev/null)
