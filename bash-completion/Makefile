@@ -1,14 +1,17 @@
+ifeq ($(OS),Windows_NT)
+  BIN_EXT = .exe
+else
+  BIN_EXT = 
+endif
+
 SRCDIR  = ../src
 OUTDIR  = build
 SRCS    = $(shell cat SOURCES)
 OBJS    = $(patsubst $(SRCDIR)/%.c,$(OUTDIR)/%.o,$(SRCS))
 CFLAGS  = -O2 -Wall
 LDFLAGS = 
-BIN     = cmigemo
-DICT    = 
-ifeq ($(OS),Windows_NT)
-  BIN  +=.exe
-endif
+BIN     = cmigemo$(BIN_EXT)
+DICT    = dict/migemo-dict
 
 CHARSET     = utf-8
 INSTALL_DIR = ~/.migemo
@@ -29,10 +32,7 @@ install: all
 
 bin: $(BIN)
 
-dict: $(
-	mkdir -p dict
-	make -C ../dict $(CHARSET)
-	cp -a ../dict/$(CHARSET).d/* dict/
+dict: $(DICT)
 
 $(OUTDIR)/make.dep dep: SOURCES
 	@rm -f $(OUTDIR)/make.dep
@@ -47,6 +47,11 @@ $(OUTDIR)/%.o: $(SRCDIR)/%.c $(OUTDIR)/make.dep
 
 $(BIN): $(OBJS)
 	$(CC) $(LDFLAGS) -o $(BIN) $(OBJS)
+
+$(DICT):
+	mkdir -p dict
+	make -C ../dict $(CHARSET)
+	cp -a ../dict/$(CHARSET).d/* dict/
 
 clean:
 	rm -f $(OBJS)
