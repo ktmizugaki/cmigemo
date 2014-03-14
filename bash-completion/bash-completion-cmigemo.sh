@@ -42,7 +42,7 @@ _filedir() {
     local IFS=$'\n'
     local dir name files pattern require_dir
 
-    if echo "$cur" | grep -q "/" 2>/dev/null; then
+    if [[ $cur = */* ]]; then
         require_dir=1
         eval dir="${cur%/*}/"
         eval name="${cur##*/}"
@@ -91,7 +91,5 @@ _migemo_complete_dironly() {
     _filedir -d
 }
 
-
-# cd コマンドに対する補完設定が無ければ、ディレクトリのみを補完対象とするように設定する。
 complete -o filenames -F _migemo_complete_dironly  cd
 complete -o filenames -D -F _migemo_complete
