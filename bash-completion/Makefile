@@ -22,13 +22,18 @@ all: bin dict
 
 install: all
 	mkdir -p $(INSTALL_DIR)
-	@echo Installing
 	cp -a $(BIN)  $(INSTALL_DIR)/
 	sed -e "s#@MIGEMO_DIR@#$(INSTALL_DIR)#" bash-completion-cmigemo.sh > $(INSTALL_DIR)/bash-completion-cmigemo.sh
-	@echo Installing dictionary
 	mkdir -p $(INSTALL_DIR)/dict
 	cp -a dict/* $(INSTALL_DIR)/dict/
-	@echo Add "source $(INSTALL_DIR)/bash-completion-cmigemo.sh" to your .bashrc
+	@echo "#############################################"
+	@echo "## Installation Completed"
+	@echo "## To enable filename completion with migemo,"
+	@echo "## add the following line to your .bashrc"
+	@echo "##"
+	@echo "## source $(INSTALL_DIR)/bash-completion-cmigemo.sh"
+	@echo "#############################################"
+
 
 bin: $(BIN)
 
