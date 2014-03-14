@@ -1,0 +1,39 @@
+readline-6.1-complete_lcd.patch
+
+補完時に、補完候補の共通部分がほとんどない場合に、
+入力行が短くなってしまうのに対処するパッチです。
+例えば、"program" と "プロジェクト" というのがtmp/にある時、
+  ls tmp/pro<TAB>
+と入力すると、補完候補は "tmp/program" と "tmp/プロジェクト"になります。
+共通部分の "tmp/" が「補完」され、入力行が
+  ls tmp/
+になってしまいます。
+このパッチはこの現象を回避します。
+
+
+--- readline-6.1.orig/complete.c	2009-11-30 08:39:30.000000000 +0900
++++ readline-6.1/complete.c	2014-03-14 16:28:14.838838300 +0900
+@@ -1203,10 +1203,20 @@
+   /* If there were multiple matches, but none matched up to even the
+      first character, and the user typed something, use that as the
+      value of matches[0]. */
+-  if (low == 0 && text && *text)
++  if (text && *text && low < strlen(text))
+     {
+-      match_list[0] = (char *)xmalloc (strlen (text) + 1);
+-      strcpy (match_list[0], text);
++      if (rl_filename_completion_desired &&
++          rl_filename_dequoting_function &&
++          rl_completion_found_quote &&
++          rl_filename_quoting_desired)
++        {
++          match_list[0] = (*rl_filename_dequoting_function) ((char *)text, rl_completion_quote_character);
++        }
++      else
++        {
++          match_list[0] = (char *)xmalloc (strlen (text) + 1);
++          strcpy (match_list[0], text);
++        }
+     }
+   else
+     {
