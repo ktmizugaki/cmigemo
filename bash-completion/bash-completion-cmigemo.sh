@@ -56,9 +56,9 @@ _filedir() {
     fi
     
     if [ "${1:-}" = -d ]; then
-        files=$(cd "$dir" && find -L . -maxdepth 1 -type d | sed -n -e "s#^\./##p")
+        files=$(cd "$dir" && find -L . -maxdepth 1 -type d 2>/dev/null | sed -n -e "s#^\./##p")
     else
-        files=$(cd "$dir" && find -L . -maxdepth 1 | sed -n -e "s#^\./##p")
+        files=$(cd "$dir" && find -L . -maxdepth 1 2>/dev/null | sed -n -e "s#^\./##p")
     fi
     if [ -n "$name" ]; then
         pattern=$(_migemo_complete_query "$name" 2>/dev/null)
