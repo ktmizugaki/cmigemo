@@ -40,21 +40,26 @@ _migemo_complete_stop() {
 _filedir() {
 
     local IFS=$'\n'
-    local dir name files pattern require_dir
+    local dir xdir name files pattern
 
     if [[ $cur = */* ]]; then
-        require_dir=1
-        eval dir="${cur%/*}/"
-        eval name="${cur##*/}"
+        dir="${cur%/*}/"
+        name="${cur##*/}"
+        xdir="$dir"
+        if ! [[ ${xdir:0:1} = \' || ${xdir:0:1} = \" ]]; then
+            xdir=$(echo $xdir | sed -e 's/\\\([\() ]\)/\1/g')
+        fi
     else
         dir="./"
-        eval name="$cur"
+        name="$cur"
     fi
+    eval "dir=$dir" 1>/dev/null 2>&1 || eval "dir=$dir\"" 1>/dev/null 2>&1 || eval "name=$dir'" 1>/dev/null 2>&1
+    eval "name=$name" 1>/dev/null 2>&1 || eval "name=$name\"" 1>/dev/null 2>&1 || eval "name=$name'" 1>/dev/null 2>&1
     if [ ! -d "$dir" -o ! -x "$dir" ]; then
         unset COMPREPLY;
         return 1
     fi
-    
+
     if [ "${1:-}" = -d ]; then
         files=$(cd "$dir" && find -L . -maxdepth 1 -type d 2>/dev/null | sed -n -e "s#^\./##p")
     else
@@ -64,9 +69,9 @@ _filedir() {
         pattern=$(_migemo_complete_query "$name" 2>/dev/null)
         files=$(echo "$files" | grep --color=never "^$pattern")
     fi
-    if [ "$require_dir" = "1" -a -n "$files" ]; then
+    if [ -n "$xdir" -a -n "$files" ]; then
         files=$(echo "$files" | while read -r tmp; do
-            echo "$dir$tmp"
+            echo "$xdir$tmp"
         done)
     fi
     if [ -n "$files" ]; then
