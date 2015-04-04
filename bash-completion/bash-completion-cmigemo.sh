@@ -47,7 +47,9 @@ _filedir() {
         name="${cur##*/}"
         xdir="$dir"
         if ! [[ ${xdir:0:1} = \' || ${xdir:0:1} = \" ]]; then
-            xdir=$(echo $xdir | sed -e 's/\\\([\() ]\)/\1/g')
+            xdir=$(echo $xdir | sed -e 's/\\\(.\)/\1/g')
+        else
+            eval "xdir=$xdir"
         fi
     else
         dir="./"
@@ -60,13 +62,14 @@ _filedir() {
         return 1
     fi
 
-    if [ "${1:-}" = -d ]; then
+    if [ "${1:-}" = "-d" ]; then
         files=$(cd "$dir" && find -L . -maxdepth 1 -type d 2>/dev/null | sed -n -e "s#^\./##p")
     else
         files=$(cd "$dir" && find -L . -maxdepth 1 2>/dev/null | sed -n -e "s#^\./##p")
     fi
     if [ -n "$name" ]; then
         pattern=$(_migemo_complete_query "$name" 2>/dev/null)
+        [ -z "$pattern" ] && pattern="$name"
         files=$(echo "$files" | grep --color=never "^$pattern")
     fi
     if [ -n "$xdir" -a -n "$files" ]; then
