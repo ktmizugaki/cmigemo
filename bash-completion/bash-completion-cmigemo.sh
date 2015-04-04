@@ -9,7 +9,7 @@ _migemo_complete_query() {
     local MIGEMO_PID="$MIGEMO_DIR/socket.pid"
 
     if [ -n "$MIGEMO_SOCKET" ]; then
-        pid=$(cat "$MIGEMO_PID" 2>/dev/null)
+        pid=$(/bin/cat "$MIGEMO_PID" 2>/dev/null)
         if ! kill -0 "$pid" 2>/dev/null; then
             "$MIGEMO_BIN" -c "$MIGEMO_SOCKET" -d "$MIGEMO_DICT" -q -e -n
         fi
@@ -28,7 +28,7 @@ _migemo_complete_stop() {
     local MIGEMO_SOCKET="$MIGEMO_DIR/socket"
     local MIGEMO_PID="$MIGEMO_DIR/socket.pid"
 
-    pid=$(cat "$MIGEMO_PID" 2>/dev/null)
+    pid=$(/bin/cat "$MIGEMO_PID" 2>/dev/null)
     if kill -0 "$pid" 2>/dev/null; then
         kill -TERM "$pid" && echo "stoped" || echo "stop failed"
         rm -f "$MIGEMO_SOCKET" "$MIGEMO_PID"
@@ -63,14 +63,14 @@ _filedir() {
     fi
 
     if [ "${1:-}" = "-d" ]; then
-        files=$(cd "$dir" && find -L . -maxdepth 1 -type d 2>/dev/null | sed -n -e "s#^\./##p")
+        files=$(cd "$dir" && /usr/bin/find -L . -maxdepth 1 -type d 2>/dev/null | sed -n -e "s#^\./##p")
     else
-        files=$(cd "$dir" && find -L . -maxdepth 1 2>/dev/null | sed -n -e "s#^\./##p")
+        files=$(cd "$dir" && /usr/bin/find -L . -maxdepth 1 2>/dev/null | sed -n -e "s#^\./##p")
     fi
     if [ -n "$name" ]; then
         pattern=$(_migemo_complete_query "$name" 2>/dev/null)
         [ -z "$pattern" ] && pattern="$name"
-        files=$(echo "$files" | grep --color=never "^$pattern")
+        files=$(echo "$files" | /bin/grep --color=never "^$pattern")
     fi
     if [ -n "$xdir" -a -n "$files" ]; then
         files=$(echo "$files" | while read -r tmp; do
