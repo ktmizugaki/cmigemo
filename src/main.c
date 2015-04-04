@@ -197,7 +197,7 @@ main(int argc, char** argv)
 	    migemo_set_operator(pmigemo, MIGEMO_OPINDEX_NEST_IN, "\\(");
 	    migemo_set_operator(pmigemo, MIGEMO_OPINDEX_NEST_OUT, "\\)");
 	    if (!mode_nonewline)
-		migemo_set_operator(pmigemo, MIGEMO_OPINDEX_NEWLINE, "[[:space:]\r\n]*");
+		migemo_set_operator(pmigemo, MIGEMO_OPINDEX_NEWLINE, "\\s-*");
 	}
 #ifndef _PROFILE
 	if (word)
