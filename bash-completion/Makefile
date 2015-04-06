@@ -44,7 +44,8 @@ $(OUTDIR)/make.dep dep: SOURCES
 	@mkdir -p $(OUTDIR)
 	@echo Generating dependencies
 	@for x in $(SRCS); do \
-		$(CC) -MM $(CFLAGS) $$(if [ $${x#*.} = rc ]; then echo -n -x c $$x -MT $(OUTDIR)/$${x%.*}.coff; else echo -n $$x -MT $(OUTDIR)/$${x%.*}.o; fi) >> $(OUTDIR)/make.dep; done
+		$(CC) -MM $(CFLAGS) $$(if [ $${x#*.} = rc ]; then echo -n -x c $$x -MT $${x%.*}.coff; else echo -n $$x -MT $${x%.*}.o; fi); \
+	 done | sed "s#^$(SRCDIR)#$(OUTDIR)#" > $(OUTDIR)/make.dep
 
 $(OUTDIR)/%.o: $(SRCDIR)/%.c $(OUTDIR)/make.dep
 	mkdir -p $(dir $@)
