@@ -26,9 +26,13 @@
 #define RXGEN_OP_OR "|"
 #define RXGEN_OP_NEST_IN "("
 #define RXGEN_OP_NEST_OUT ")"
+#define RXGEN_OP_OPTIONAL "?"
 #define RXGEN_OP_SELECT_IN "["
 #define RXGEN_OP_SELECT_OUT "]"
 #define RXGEN_OP_NEWLINE ""
+
+#define RXGEN_FLAG_MUST_INCLUDE 1
+#define RXGEN_FLAG_END_OF_WORD  2
 
 int n_rnode_new = 0;
 int n_rnode_delete = 0;
@@ -43,6 +47,7 @@ struct _rxgen
     unsigned char op_or[RXGEN_OP_MAXLEN];
     unsigned char op_nest_in[RXGEN_OP_MAXLEN];
     unsigned char op_nest_out[RXGEN_OP_MAXLEN];
+    unsigned char op_optional[RXGEN_OP_MAXLEN];
     unsigned char op_select_in[RXGEN_OP_MAXLEN];
     unsigned char op_select_out[RXGEN_OP_MAXLEN];
     unsigned char op_newline[RXGEN_OP_MAXLEN];
@@ -55,6 +60,7 @@ struct _rxgen
 struct _rnode
 {
     unsigned int code;
+    unsigned int flags;
     rnode* child;
     rnode* next;
 };
@@ -156,6 +162,7 @@ rxgen_open()
 	strcpy(object->op_or,		RXGEN_OP_OR);
 	strcpy(object->op_nest_in,	RXGEN_OP_NEST_IN);
 	strcpy(object->op_nest_out,	RXGEN_OP_NEST_OUT);
+	strcpy(object->op_optional,	RXGEN_OP_OPTIONAL);
 	strcpy(object->op_select_in,	RXGEN_OP_SELECT_IN);
 	strcpy(object->op_select_out,	RXGEN_OP_SELECT_OUT);
 	strcpy(object->op_newline,	RXGEN_OP_NEWLINE);
@@ -182,13 +189,18 @@ search_rnode(rnode* node, unsigned int code)
 }
 
     int
-rxgen_add(rxgen* object, const unsigned char* word)
+rxgen_add(rxgen* object, const unsigned char* word, int must_include)
 {
     rnode **ppnode;
-    rnode *pnode;
+    rnode *pnode = NULL;
 
     if (!object || !word)
 	return 0;
+
+    /* must_include が真なら、RXGEN_FLAG_MUST_INCLUDE を設定する。
+     * より短いパターンが存在する場合でも最終パターンに含まれるよう、
+     * 入力パターンの破棄を行わない。
+     */
 
     ppnode = &object->node;
     while (1)
@@ -200,8 +212,11 @@ rxgen_add(rxgen* object, const unsigned char* word)
 	/* 入力パターンが尽きたら終了 */
 	if (code == 0)
 	{
+	    if (pnode) {
+	        pnode->flags |= RXGEN_FLAG_END_OF_WORD;
+	    }
 	    /* 入力パターンよりも長い既存パターンは破棄する */
-	    if (*ppnode)
+	    if (*ppnode && !((*ppnode)->flags & RXGEN_FLAG_MUST_INCLUDE))
 	    {
 		rnode_delete(*ppnode);
 		*ppnode = NULL;
@@ -215,9 +230,10 @@ rxgen_add(rxgen* object, const unsigned char* word)
 	    pnode = rnode_new();
 	    pnode->code = code;
 	    pnode->next = *ppnode;
+	    pnode->flags = 0;
 	    *ppnode = pnode;
 	}
-	else if (pnode->child == NULL)
+	else if (!must_include && (pnode->child == NULL || (pnode->flags & RXGEN_FLAG_END_OF_WORD)))
 	{
 	    /*
 	     * codeを持つノードは有るが、その子供が無い場合、それ以降の入力
@@ -226,6 +242,9 @@ rxgen_add(rxgen* object, const unsigned char* word)
 	     *	   たのしい + たのしみ -> たのし
 	     */
 	    break;
+	}
+	if (must_include) {
+	    pnode->flags |= RXGEN_FLAG_MUST_INCLUDE;
 	}
 	/* 子ノードを辿って深い方へ注視点を移動 */
 	ppnode = &pnode->child;
@@ -294,7 +313,14 @@ rxgen_generate_stub(rxgen* object, wordbuf_t* buf, rnode* node)
 	    /* 空白・改行飛ばしのパターンを挿入 */
 	    if (object->op_newline[0])
 		wordbuf_cat(buf, object->op_newline);
+	    if (tmp->flags & RXGEN_FLAG_END_OF_WORD) {
+		if (tmp->child->child) wordbuf_cat(buf, object->op_nest_in);
+	    }
 	    rxgen_generate_stub(object, buf, tmp->child);
+	    if (tmp->flags & RXGEN_FLAG_END_OF_WORD) {
+		if (tmp->child->child) wordbuf_cat(buf, object->op_nest_out);
+		wordbuf_cat(buf, object->op_optional);
+	    }
 	    for (tmp = tmp->next; tmp && !tmp->child; tmp = tmp->next)
 		;
 	    if (!tmp)
@@ -355,6 +381,8 @@ rxgen_get_operator_stub(rxgen* object, int index)
 	    return object->op_nest_in;
 	case RXGEN_OPINDEX_NEST_OUT:
 	    return object->op_nest_out;
+	case RXGEN_OPINDEX_OPTIONAL:
+	    return object->op_optional;
 	case RXGEN_OPINDEX_SELECT_IN:
 	    return object->op_select_in;
 	case RXGEN_OPINDEX_SELECT_OUT:
@@ -403,7 +431,7 @@ main(int argc, char** argv)
 	char buf[256], *ans;
 
 	while (gets(buf) && !feof(stdin))
-	    rxgen_add(prx, buf);
+	    rxgen_add(prx, buf, 0);
 	ans = rxgen_generate(prx);
 	printf("rxgen=%s\n", ans);
 	rxgen_release(prx, ans);

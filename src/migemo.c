@@ -33,7 +33,7 @@
 # define EXPORTS
 #endif
 
-typedef int (*MIGEMO_PROC_ADDWORD)(void* data, unsigned char* word);
+typedef int (*MIGEMO_PROC_ADDWORD)(void* data, unsigned char* word, int must_include);
 
 /* migemoオブジェクト */
 struct _migemo
@@ -46,6 +46,7 @@ struct _migemo
     romaji* han2zen;
     romaji* zen2han;
     rxgen* rx;
+    mnode *initial_node;
     MIGEMO_PROC_ADDWORD addword;
     CHARSET_PROC_CHAR2INT char2int;
 };
@@ -298,9 +299,10 @@ migemo_query_proc(mnode* p, void* data)
 {
     migemo *object = (migemo*)data;
     wordlist_p list = p->list;
+    int is_initial = object->initial_node == p;
 
     for (; list; list = list->next)
-	object->addword(object, list->ptr);
+	object->addword(object, list->ptr, is_initial);
 }
 
 /*
@@ -312,7 +314,11 @@ add_mnode_query(migemo* object, unsigned char* query)
     mnode *pnode;
 
     if ((pnode = mnode_query(object->mtree, query)) != NULL)
+    {
+	object->initial_node = pnode;
 	mnode_traverse(pnode, migemo_query_proc, object);
+	object->initial_node = NULL;
+    }
 }
 
 /**
@@ -326,16 +332,16 @@ add_roma(migemo* object, unsigned char* query)
     hira = romaji_convert(object->roma2hira, query, &stop);
     if (!stop)
     {
-	object->addword(object, hira);
+	object->addword(object, hira, 1);
 	/* 平仮名による辞書引き */
 	add_mnode_query(object, hira);
 	/* 片仮名文字列を生成し候補に加える */
 	kata = romaji_convert2(object->hira2kata, hira, NULL, 0);
-	object->addword(object, kata);
+	object->addword(object, kata, 1);
 	/* TODO: 半角カナを生成し候補に加える */
 #if 1
 	han = romaji_convert2(object->zen2han, kata, NULL, 0);
-	object->addword(object, han);
+	object->addword(object, han, 1);
 	/*printf("kata=%s\nhan=%s\n", kata, han);*/
 	romaji_release(object->zen2han, han);
 #endif
@@ -466,7 +472,7 @@ query_a_word(migemo* object, unsigned char* query)
     int len = my_strlen(query);
 
     /* query自信はもちろん候補に加える */
-    object->addword(object, query);
+    object->addword(object, query, 1);
     /* queryそのものでの辞書引き */
     lower = malloc(len + 1);
     if (!lower)
@@ -495,7 +501,7 @@ query_a_word(migemo* object, unsigned char* query)
     zen = romaji_convert2(object->han2zen, query, NULL, 0);
     if (zen != NULL)
     {
-	object->addword(object, zen);
+	object->addword(object, zen, 1);
 	romaji_release(object->han2zen, zen);
     }
 
@@ -503,7 +509,7 @@ query_a_word(migemo* object, unsigned char* query)
     han = romaji_convert2(object->zen2han, query, NULL, 0);
     if (han != NULL)
     {
-	object->addword(object, han);
+	object->addword(object, han, 1);
 	romaji_release(object->zen2han, han);
     }
 
@@ -515,11 +521,11 @@ query_a_word(migemo* object, unsigned char* query)
 }
 
     static int
-addword_rxgen(migemo* object, unsigned char* word)
+addword_rxgen(migemo* object, unsigned char* word, int must_include)
 {
     /* 正規表現生成エンジンに追加された単語を表示する */
     /*printf("addword_rxgen: %s\n", word);*/
-    return rxgen_add(object->rx, word);
+    return rxgen_add(object->rx, word, must_include);
 }
 
 /**

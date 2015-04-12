@@ -188,6 +188,7 @@ main(int argc, char** argv)
 	    migemo_set_operator(pmigemo, MIGEMO_OPINDEX_OR, "\\|");
 	    migemo_set_operator(pmigemo, MIGEMO_OPINDEX_NEST_IN, "\\%(");
 	    migemo_set_operator(pmigemo, MIGEMO_OPINDEX_NEST_OUT, "\\)");
+	    migemo_set_operator(pmigemo, MIGEMO_OPINDEX_OPTIONAL, "\\{0,1\\}");
 	    if (!mode_nonewline)
 		migemo_set_operator(pmigemo, MIGEMO_OPINDEX_NEWLINE, "\\_s*");
 	}
@@ -196,6 +197,7 @@ main(int argc, char** argv)
 	    migemo_set_operator(pmigemo, MIGEMO_OPINDEX_OR, "\\|");
 	    migemo_set_operator(pmigemo, MIGEMO_OPINDEX_NEST_IN, "\\(");
 	    migemo_set_operator(pmigemo, MIGEMO_OPINDEX_NEST_OUT, "\\)");
+	    migemo_set_operator(pmigemo, MIGEMO_OPINDEX_OPTIONAL, "\\?");
 	    if (!mode_nonewline)
 		migemo_set_operator(pmigemo, MIGEMO_OPINDEX_NEWLINE, "\\s-*");
 	}
