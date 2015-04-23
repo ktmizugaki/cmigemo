@@ -38,5 +38,5 @@ for ($i = 0; $i < @migemo; ++$i)
 sub uniq_array
 {
     my %array = map {$_, 1} @{$_[0]};
-    return keys %array
+    return sort keys %array
 }

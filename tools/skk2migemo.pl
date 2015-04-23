@@ -31,6 +31,9 @@ while (<>)
     $value =~ s{^/}{};
     $value =~ s{/$}{};
     @values = grep {
+	# Remove chemical symbols as it is usualy confusing.
+	$key =~ m/^[\w -}]+$/ || $_ !~ m/^[A-Z][a-z]?$|^Uu[a-z]$/;
+    } grep {
 	# Remove lisp expressions.
 	$_ !~ m/^\([a-zA-Z].*\)$/;
     } grep {
